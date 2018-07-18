@@ -1,12 +1,22 @@
 const express = require('express');
 const app = express();
 
-var _data = {
+var _data = [{
     "id":"1",
     "name":"zysoft",
     "sex":"男",
     "age":"23"
-}
+},{
+    "id":"2",
+    "name":"oft",
+    "sex":"男",
+    "age":"33"
+},{
+    "id":"3",
+    "name":"ssss",
+    "sex":"女",
+    "age":"23"
+}];
 
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
