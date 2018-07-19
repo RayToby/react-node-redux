@@ -15,7 +15,7 @@ export default class Content extends PureComponent {
     }
 
     componentDidMount() {
-        fetch('http://localhost:8888/introduce')
+        fetch('/introduce')
         .then((response) => {
             if (response.status >= 400) {
                 throw new Error("Bad response from server");
