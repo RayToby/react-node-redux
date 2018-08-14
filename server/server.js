@@ -95,9 +95,9 @@ let _data = [{
 
 // }
 
-
-setInterval(getDataToDataBase,200000);   //5分钟拉取一次数据
-function getDataToDataBase(){
+// getDataToDataBase1();
+setInterval(getDataToDataBase1,200000);   //5分钟拉取一次数据
+function getDataToDataBase1(){
     let ok = 0;
     let page = 1;
     let urls = [];
@@ -149,8 +149,8 @@ function getDataToDataBase(){
                         if(err) console.error(err);
                         let data = JSON.parse(result.text);
                         data.content && data.content.positionResult.result.forEach((element, i) => {
-                            let selectSQL = `INSERT INTO lagou1 (positionName, education, city, financeStage, companyLogo, companySize, workYear, jobNature,companyFullName,salary,firstType,secondType,positionAdvantage,industryField,district) 
-                                            VALUE('${element.positionName}', '${element.education}','${element.city}','${element.financeStage}','${element.companyLogo}','${element.companySize}','${element.workYear}','${element.jobNature}','${element.companyFullName}','${element.salary}','${element.firstType}','${element.secondType}','${element.positionAdvantage}','${element.industryField}','${element.district}')`;
+                            let selectSQL = `INSERT INTO lagou1 (companyId,positionId,positionName, education, city, financeStage, companyLogo, companySize, workYear, jobNature,companyFullName,salary,firstType,secondType,positionAdvantage,industryField,district) 
+                                            VALUE('${element.companyId}','${element.positionId}','${element.positionName}', '${element.education}','${element.city}','${element.financeStage}','${element.companyLogo}','${element.companySize}','${element.workYear}','${element.jobNature}','${element.companyFullName}','${element.salary}','${element.firstType}','${element.secondType}','${element.positionAdvantage}','${element.industryField}','${element.district}')`;
                             conn.query(selectSQL, function(err, rows) {
                                 if (err) throw err;
                                 // else console.log('成功')
@@ -297,7 +297,7 @@ app.post('/findCityPosition', (req, res) => {
                     ${counts_chengdu_sql};${counts_hefei_sql};${counts_zhengzhou_sql};${counts_hangzhou_sql};${counts_nanjing_sql};
                     ${counts_fuzhou_sql};${counts_xiamen_sql};${counts_chongqing_sql};${counts_changsha_sql};${counts_wuhan_sql}`, function(err, rows) {
                     if (err) throw err;
-                    console.log(JSON.stringify(rows))
+                    // console.log(JSON.stringify(rows))
 
                     data.counts_xian = rows[0][0]['total_xian'];
                     data.counts_beijing = rows[1][0]['total_beijing'];
@@ -322,6 +322,88 @@ app.post('/findCityPosition', (req, res) => {
             
         });  
     }  
+})  
+
+app.post('/getAllCityNew',(req, res) => {
+    //console.log(req.body);
+    if (req.body) {  
+        //能正确解析 json 格式的post参数  
+        // res.send({"status": "success", "name": req.body.data.name, "age": req.body.data.age});  
+    } else {  
+        //不能正确解析json 格式的post参数  
+        var body = '', jsonStr;  
+        req.on('data', function (chunk) {  
+            body += chunk; //读取参数流转化为字符串  
+        }); 
+        req.on('end', function () {  
+            //读取参数流结束后将转化的body字符串解析成 JSON 格式  
+            try {  
+                jsonStr = JSON.parse(body);
+                let page = jsonStr.page - 1;
+                let pageSize = jsonStr.pageSize; 
+                let startRows = page * pageSize;
+                let companyFullName = jsonStr.companyFullName ? jsonStr.companyFullName : '';
+                let positionName = jsonStr.positionName ? jsonStr.positionName : '';
+                let city = jsonStr.city ? jsonStr.city : '';
+                let salary = jsonStr.salary ? jsonStr.salary : '';
+                let workYear = jsonStr.workYear ? jsonStr.workYear : '';
+                let education = jsonStr.education ? jsonStr.education : '';
+                let industryField = jsonStr.industryField ? jsonStr.industryField : '';
+                let counts = 0;
+                let data = {};
+                let findData = `Select * from lagou1 where 1=1`;
+                let dataCount = `Select count(1) as total from lagou1 where 1=1`;
+                if(companyFullName != '') {
+                    findData += ` and companyFullName like '%${companyFullName}%'`;
+                    dataCount += ` and companyFullName like '%${companyFullName}%'`;
+                }
+                if(positionName != '') {
+                    findData += ` and positionName like '%${positionName}%'`;
+                    dataCount += ` and positionName like '%${positionName}%'`;
+                }
+                if(city != '') {
+                    findData += ` and city like '%${city}%'`;
+                    dataCount += ` and city like '%${city}%'`;
+                }
+                if(salary != '') {
+
+                    findData += ` and where salary like '%${salary}%'`;
+                    dataCount += ` and where salary like '%${salary}%'`;
+                }
+                if(workYear != '') {
+
+                    findData += ` and where workYear like '%${workYear}%'`;
+                    dataCount += ` and where workYear like '%${workYear}%'`;
+                }
+                if(education != '') {
+
+                    findData += ` and where education like '%${education}%'`;
+                    dataCount += ` and where education like '%${education}%'`;
+                }
+                if(industryField != '') {
+
+                    findData += ` and where industryField like '%${industryField}%'`;
+                    dataCount += ` and where industryField like '%${industryField}%'`;
+                }
+                findData += ` limit ${startRows}, ${pageSize}`
+                conn.query(dataCount, function(err, rows) {
+                    if (err) throw err;
+                    counts = rows[0]['total'];
+                    data.total = counts;
+                }); 
+                conn.query(findData, function(err, rows) {
+                    if (err) throw err;
+                    data.dataList = rows;
+                    res.send({"code":0,"status":"success", "data":data}); 
+                }); 
+            } catch (err) {  
+                jsonStr = null;  
+            }  
+            
+        });   
+    }
+    
+    
 })
 
 app.listen(8888,function(){
